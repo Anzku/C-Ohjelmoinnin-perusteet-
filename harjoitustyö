@@ -1,0 +1,520 @@
+/* ********************************************************************
+Harjoitustyö
+Luotu: 14.11.2016, Anzhelika Kettunen
+Henkilöiden tiedot tallennettaan tiedostoon.
+Ohjelma salaa ja purkaa käyttäjän tekstin.
+*********************************************************************/
+#include <iostream>       
+#pragma warning(disable:4996)    
+#define MAX 20   
+#define MAX_H 50  
+#define MAX_SALAS 5  
+#define MAX_TEXT 500  
+using namespace std;
+char koodi[MAX_H];
+int k;
+struct TAULUKKO {
+	char etunimi[MAX + 1];
+	char salasana[MAX_SALAS + 1];
+	char ip[17];
+};
+
+void LisaaHenkilo();
+void TulostaKaikkiHenkilot();
+void Nayta_henkilo();
+void Poista_henkilo();
+void Menu1();
+void Menu2();
+void Log_as();
+void Reg_uudestaan();
+void Sala();
+void Avaa();
+#define TIEDOSTO "D:/kansio/K8993_harjoitustyo.bin"  
+#define TEXT "D:/kansio/salatext.txt"
+int main()
+{
+	cout << "********************************************************************\n"
+		"Harjoitusty\x94\n"
+		"Luotu: 14.12.2016, Anzhelika Kettunen (K8993)\n\n"
+		"Henkil\x94iden tiedot tallennettaan tiedostoon.\n"
+		"Ohjelma salaa ja purkaa k\x84ytt\x84j\x84n tekstin.\n"
+		"Tavoitteena oli tutustua tietojen salaamisen\n"
+		"k\x84ytt\x84m\x84ll\x84 kirjoittautumistietoja\n"
+		"*********************************************************************\n\n"
+		"Testaamaan ohjelman luo pari uuttaa k\x84ytt\x84j\x84\x84 ja yksi k\x84ytt\x84j\x84 nimella admin.\n"
+		"*********************************************************************\n\n"
+		"Kirjaudu sis\x84\x84n tai luo uuden k\x84ytt\x84j\x84n.\n";
+	
+	Log_as();
+	return 0;
+}
+
+void LisaaHenkilo()
+{
+	TAULUKKO henkilo;
+	FILE *p_fp;
+	int j;
+	int vastaus;
+	p_fp = fopen(TIEDOSTO, "ab");
+	if (p_fp == NULL)
+	{
+		cout << "avaus ei onnistu" << endl;
+		exit(-1);
+	}
+	cin.clear();
+	cout << "Uuden k\x84ytt\x84j\x84n nimi: ";
+	
+	cin>>henkilo.etunimi;
+	while (henkilo.etunimi == NULL) {
+
+		cin.getline(henkilo.etunimi, MAX + 1);
+	}
+
+	do {
+		cout << "Syota uusi salasana (" << MAX_SALAS << " merkkia): " << endl;
+		cin >> henkilo.salasana;
+		for (j = 0; henkilo.salasana[j] != NULL; j++) {}
+		while (cin.fail() || j != MAX_SALAS)
+		{
+			cin.clear();
+			cin.ignore(512, '\n');
+			cout << "Olet antanut " << j << " merkkia\n";
+			cout << "Salasana ei ole sopiva. Pit\x84 olla tasan 5 merkkia.\nSyota uusi salasana: ";
+			cin >> henkilo.salasana;
+			for (j = 0; henkilo.salasana[j] != NULL; j++) {}
+			
+		}
+		cout << "Sinun salasanasi on: " << henkilo.salasana << endl << "Haluatko tallentaa sen? (1=kyll\x84, 2=ei): ";
+		cin >> vastaus;
+		cin.ignore(512, '\n');
+	} while (vastaus != 1);
+	cout << "Salasana on tallennettu" << endl << endl;
+	system("cls");
+	cout << "IP-osoite: \n" 
+		"(ideana, ett\x84 ohjelma automattisesti tallentaa \n"
+		"k\x84ytt\x84j\x84n IP-osoitteen,\n"
+		"mutta t\x84ss\x84 ohjelmassa se ei toteutettu, \n"
+		"ja ohjelma ei tarkista, ett\x84 IP-osoite on oikean muotoinen).\n"
+		"Siis kirjoita k\x84ytt\x84j\x84n IP-osoitteen manualisesti: ";
+	cin >> henkilo.ip;
+	fwrite(&henkilo, sizeof henkilo, 1, p_fp); //& - osoitte, missä henkilo on talennettu,     
+	fclose(p_fp);
+	system("cls");
+	cout << "TALLENNETTU \n";
+	cout << henkilo.etunimi << " - salasana: " << henkilo.salasana << ", ip-osoite: " << henkilo.ip << endl;
+}
+void TulostaKaikkiHenkilot()
+{
+	TAULUKKO henkilo;
+	FILE *p_fp;
+	/* avataan se uudestaan lukemista varten: */
+	p_fp = fopen(TIEDOSTO, "rb");
+	if (p_fp == NULL) /* onnistuiko avaaminen */
+	{
+		cout << "input-tiedoston avaus ei onnistu\n";
+		exit(-1);
+	}
+	/* onnistui, luetaan tiedostoa */
+	fread(&henkilo, sizeof henkilo, 1, p_fp);  /* luetaan yksi tietue */
+
+	cout << "\n(Vain t\x84ss\x84 testiohjelmassa admin voi n\x84hd\x84 k\x84ytt\x84jien salasanoja, muuten ei.)\n";
+	while (!feof(p_fp))
+	{   /* tulostetaan tietueen kentä*/
+		cout << henkilo.etunimi << " - salasana: " << henkilo.salasana << "; ip-osoite: " << henkilo.ip << "\n";
+		fread(&henkilo, sizeof henkilo, 1, p_fp);  /* luetaan seuraava tietue */
+	}
+	fclose(p_fp);
+	/* suljetaan tiedosto */
+}
+void Nayta_henkilo()
+{
+	char nayta[MAX];
+	TAULUKKO henkilo;
+	char *osoitin;
+	FILE *p_fp;
+	int i = 0;
+	p_fp = fopen(TIEDOSTO, "rb");
+	if (p_fp == NULL) /* onnistuiko avaaminen */
+	{
+		cout << "input-tiedoston avaus ei onnistu\n";
+		exit(-1);
+	}
+	system("cls");
+	cout << "Kirjoita nimi tai sen osa: ";
+	cin.ignore(512, '\n');
+	cin.getline(nayta, MAX);
+	fread(&henkilo, sizeof henkilo, 1, p_fp);
+	do {
+		osoitin = strstr(henkilo.etunimi, nayta);
+		if (osoitin != NULL) {
+			cout << henkilo.etunimi << " - salasana: " << henkilo.salasana << ", ip-osoite: " << henkilo.ip << endl;
+			i++;
+		}
+		fread(&henkilo, sizeof henkilo, 1, p_fp);
+	} while (!feof(p_fp));
+	fclose(p_fp);
+	if (i == 0) cout << "T\x84m\x84 niminen henkil\x94 ei l\x94yty.\n\n";
+	Menu2();
+}
+void Poista_henkilo()
+{
+	TAULUKKO henkilotaulu[MAX_H];
+	TAULUKKO henkilo_copy[MAX_H];
+	TAULUKKO *addr_henk;
+	char valittu_henk[MAX + 1];
+	char *addr_valittu_henk;
+	addr_henk = henkilotaulu;
+	int i, j, k, vastaus, koll;
+	FILE *p_fp;
+	system("cls");
+	cout << "Anna nimi tai osa, joka poistetaan: ";
+	cin.ignore(512, '\n');
+	cin>>valittu_henk;
+	/* avataan tiedosto lukemista varten: */
+	p_fp = fopen(TIEDOSTO, "rb");
+	if (p_fp == NULL) /* onnistuiko avaaminen */
+	{
+		cout << "input-tiedoston avaus ei onnistu\n";
+		exit(-1);
+	}
+	fread(addr_henk, sizeof(struct TAULUKKO), 1, p_fp);
+	k = 0;
+	koll = 0;
+	while (!feof(p_fp)) /*onnistuiko lukeminen */
+	{
+		addr_henk++; k++;   /* luetaan seuraava tietue */
+		fread(addr_henk, sizeof(struct TAULUKKO), 1, p_fp);
+	}
+	j = 0;
+	for (i = 0; i < k; i++)
+	{
+		addr_valittu_henk = strstr(henkilotaulu[i].etunimi, valittu_henk);
+		if (addr_valittu_henk == NULL)
+		{
+			henkilo_copy[j] = henkilotaulu[i];
+			j++;
+		}
+		else {
+			cout << "L\x94ytyy: " << henkilotaulu[i].etunimi << endl;
+			koll++;
+		}
+	}
+	fclose(p_fp);
+	if (koll < 1) {
+		cout << "T\x84m\x84 niminen k\x84ytt\x84j\x84 ei l\x94ytyy\n";
+		Menu2();
+	}
+	else {
+
+		cout << "Haluatko poistaa valitut henkilot? (1=kylla/2=ei): ";
+		cin >> vastaus;
+		if (vastaus == 1) {
+			p_fp = fopen(TIEDOSTO, "wb");  
+			if (p_fp == NULL)
+			{
+				cout << "output-tiedoston avaus ei onnistu\n";
+				exit(-1);
+			}
+			// Tallennetaan muutokset tiedostoon eli jatetaan kirjoittamatta   
+			// poistettu tietue   
+			fwrite(henkilo_copy, sizeof(struct TAULUKKO), j, p_fp);
+			fclose(p_fp); /* suljetaan tiedosto */
+			system("cls");
+			cout << "Poistaminen onnistunut. Uusi lista:" << endl;
+		}
+		TulostaKaikkiHenkilot();
+		Menu2();
+	}
+}
+void Log_as()
+{
+	int i, nim_pit, j=0, loppu, nim;
+	char nayta[MAX] = {};
+	char salasana[MAX_SALAS]= {};
+	
+	TAULUKKO henkilo;
+	char *osoitin1 = NULL;
+	char *osoitin2 = NULL;
+	FILE *p_fp;
+	p_fp = fopen(TIEDOSTO, "rb");
+	if (p_fp == NULL) /* onnistuiko avaaminen */
+	{
+		p_fp = fopen(TIEDOSTO, "ab");
+		if (p_fp == NULL) {
+			cout << "input-tiedoston avaus ei onnistu\n";
+			exit(-1);
+		}
+		LisaaHenkilo();
+		Log_as();
+	}
+	cout << "Log as: ";
+	cin.clear();
+	cin >> nayta;
+	fread(&henkilo, sizeof henkilo, 1, p_fp);
+	do {
+		if (strcmp(henkilo.etunimi, nayta)==0) {
+			cout << henkilo.etunimi << " - anna salasana: ";
+			cin >> salasana;
+			if (strcmp(henkilo.salasana, salasana)==0)
+			{
+				system("cls");
+				cout << "Tervetuloa " << henkilo.etunimi << "!" << endl;
+				for (i = 0; henkilo.etunimi[i] != NULL; i++) {}
+				nim_pit = i-1;
+				
+			
+				for (i = 0; i <= MAX_SALAS; i++) {
+					koodi[i] = henkilo.salasana[i];
+				}
+				for (i = 0; henkilo.etunimi[i]!=NULL; i++) {
+					koodi[MAX_SALAS + i] = henkilo.etunimi[i];
+				}
+				
+				for (i = 0; henkilo.ip[i] != NULL; i++) {
+					koodi[MAX_SALAS + nim_pit + i+1] = henkilo.ip[i];
+				}
+				koodi[MAX_SALAS + nim_pit + i + 1] = '\0';
+				for (k = 0; koodi[k] != NULL; k++) {
+					//cout << "k=" << k << endl;
+				} // laskee merkkejä koodissa
+				k--; // merkkejä koodissa ilman viimeistä tyhjää merkkiä
+				for (i = 0; i <= k; i++) {
+					koodi[i] = koodi[i] + henkilo.etunimi[i%nim_pit]-500;
+				}
+					cout << endl;
+					fclose(p_fp);
+					if (strstr(henkilo.etunimi, "admin") != NULL)
+					{
+						osoitin1 = NULL;
+						osoitin2 = NULL;
+						Menu2();
+						break;
+					}
+					else {
+						osoitin1 = NULL;
+						osoitin2 = NULL;
+						Menu1();
+						exit(-1);
+						break;
+					}
+				}
+			else {
+				cout << "Vaara salasana, kokeile uudestaan: ";
+				cin.clear();
+				cin >> salasana;
+				osoitin2 = strstr(henkilo.salasana, salasana);
+				if (osoitin2 == NULL) {
+					fclose(p_fp);
+					cout << "Vaara salasana." << endl;
+					Reg_uudestaan();
+				}
+				else {
+					fclose(p_fp);
+					if (strstr(henkilo.etunimi, "admin") != NULL)
+					{
+						Menu2();
+						exit(-1);
+						break;
+					}
+					else {
+						osoitin1 = NULL;
+						osoitin2 = NULL;
+						Menu1();
+						exit(-1);
+						break;
+					}
+				}
+			}
+		}
+		fread(&henkilo, sizeof henkilo, 1, p_fp);
+	} while (!feof(p_fp));
+	fclose(p_fp);
+ 
+	if (osoitin1 == NULL) {
+		cout << "Kayttajan nimi ei ole olemassa. ";
+		Reg_uudestaan();
+	}
+	
+}
+void Menu1()
+{
+	char teksti[MAX_TEXT + 1];
+	int vv, i;
+	cin.clear();
+	cout << "VALITSE TOIMINTO:" << endl;
+	cout << "0. Lopeta ohjelmaa" << endl;
+	cout << "1. Salaa teksti" << endl;
+	cout << "2. Avaa teksti" << endl;
+	cout << "3. Kirjaudu ulos" << endl;
+
+	cin >> vv;
+
+	switch (vv)
+	{
+	case 0: exit(-1);
+	case 1: {
+		Sala();
+		break;
+	}
+	case 2: {
+		
+		Avaa();
+		break;
+	}
+	case 3: {
+		system("cls");
+		Log_as();
+		break;
+	}
+	default: {
+		system("cls");
+		Menu1(); }
+	}
+}
+void Menu2()
+{
+	int v;
+	cout << "\nADMIN-menu" << endl;
+	cout << "0. Lopeta ohjelmaa" << endl;
+	cout << "1. Lis\x84\x84 henkil\x94" << endl;
+	cout << "2. N\x84yt\x84 kaikki henkil\x94t" << endl;
+	cout << "3. N\x84yt\x84 henkil\x94" << endl;
+	cout << "4. Poista henkil\x94" << endl;
+	cout << "5. Kirjaudu ulos" << endl;
+	cin >> v;
+	
+	do {
+		switch (v)
+		{
+		case 0: exit(-1);
+		case 1: {
+			cout << "Lis\x84\x84 henki\x94:\n";
+			LisaaHenkilo();
+			Menu2();
+			break;
+		}
+		case 2: {
+			system("cls");
+			TulostaKaikkiHenkilot();
+			Menu2();
+			break;
+		}
+		case 3: {
+			Nayta_henkilo();
+			Menu2();
+			break;
+		}
+		case 4: {
+			Poista_henkilo();
+			Menu2();
+			break;
+		}
+		case 5: {
+			system("cls");
+			Log_as();
+			break;
+		}
+		default: Menu2();
+		}
+	} while (v != 0);
+
+}
+void Reg_uudestaan()
+{
+	int vast;
+	cout << "Haluatko rekister\x94ida uudella nimell\x84? (1=kyll\x84/2=ei) ";
+	cin >> vast;
+	switch (vast) {
+	case 1: {
+		LisaaHenkilo();
+	}
+	default: {
+		cin.ignore(512, '\n');
+		Log_as();
+	}
+
+	}
+	Log_as();
+}
+void Sala()
+{
+	int i, j,jj;
+	char teksti[MAX_TEXT + 1];
+	char sala_teksti[MAX_TEXT + 1];
+	char ch;
+	FILE *p_fp;
+	p_fp = fopen(TEXT, "w");
+	if (p_fp == NULL)
+	{
+		cout << "avaus ei onnistu" << endl;
+		exit(-1);
+	}
+	system("cls");
+	cout << "Kirjoita teksti (max. " << MAX_TEXT << " merkkej\x84) ja paina Enter:" << endl;
+	cin.ignore(512, '\n');
+	cin.getline(teksti, MAX_TEXT);
+	// lasketaan tekstin pituus
+	for (i = 0; teksti[i] != NULL; i++) {}
+	cout << endl<<"Salateksti n\x84ytt\x84\x84: " << endl;
+	cout << "---------------------------------\n\n";
+	for (j = 0; j <= i; j++) { // i - Tekstin pituus
+		sala_teksti[j] = teksti[j] + koodi[j%k];
+		cout << sala_teksti[j];
+		ch = sala_teksti[j];
+		fputc(ch, p_fp);
+		}
+	
+	cout << "\n\n---------------------------------\n\n";
+	fclose(p_fp);
+
+	cout << endl;
+	
+	cout << "Salainen teksti on tallennettu tiedostoon D:/kansio/salatext.txt " << endl << endl;
+	Menu1();
+
+}
+void Avaa() 
+{
+	int i, j, vast;
+	char teksti[MAX_TEXT + 1];
+	char sala_teksti[MAX_TEXT + 1];
+	char ch[MAX_TEXT], ch_uusi;
+	FILE *p_fp;
+	
+	
+	system("cls");
+	cout << "Avataan teksi, joka on tallennettu kansiossa D:/kansio/salatext.txt " << endl;
+	cout << "Vain tekstin omistaja voi avata alkuperaisen tekstin. " << endl;
+	cout << "Jatketaanko? (1=kylla/2=ei) ";
+	cin >> vast;
+	switch (vast) {
+	case 1: {
+		p_fp = fopen(TEXT, "r");
+		if (p_fp == NULL)
+		{
+			cout << "avaus ei onnistu" << endl;
+			exit(-1);
+			
+		}
+		cout << "Avattu teksti" << endl;
+		cout << "--------------------------------------" << endl;
+
+		for (j=0; !feof(p_fp); j++){
+		ch[j] = fgetc(p_fp)-koodi[j%k];
+		
+		}
+
+		for (i = 0; i < j-1; i++) cout << ch[i];
+		cout << endl;
+		cout << endl<<"--------------------------------------" << endl;
+		cout << endl << "Jos teksti n\x84ytt\x84\x84 kuin salateksti,\n"
+			"se tarkoittaa, ett\x84 teksi oli kryptattu k\x84yt\x84m\x84ll\x84\n"
+			"erilaisen k\x84ytt\x84j\x84tunnuksen, kuin nykyinen: " << endl;
+		cout << endl << endl;
+		Menu1();
+	}
+	default: {
+		Menu1();
+	}
+	}
+}
